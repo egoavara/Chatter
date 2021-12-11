@@ -63,7 +63,7 @@ func New(r io.Reader) (*Config, error) {
 	}
 	return &c, nil
 }
-func MapReadCloser(rc io.ReadCloser, err error) (*Config, error) {
+func HandleReadCloser(rc io.ReadCloser, err error) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}

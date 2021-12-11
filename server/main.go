@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	cfg, err := chq.MapReadCloser(os.Open("./privates/config.json"))
+	cfg, err := chq.HandleReadCloser(os.Open("./privates/config.json"))
 	if err != nil {
 		log.Fatal(err)
 	}

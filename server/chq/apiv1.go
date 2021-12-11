@@ -16,6 +16,10 @@ import (
 func SetupV1(r gin.IRouter) {
 	// ============= 유저정보 ============= //
 	// 로그인
+	r.POST("/auth", v1AuthLogin)
+	// 로그아웃
+	r.DELETE("/auth", v1AuthLogout)
+	// 자기정보 요청
 	r.GET("/users")
 	// 회원가입
 	r.POST("/users", v1UserRegister)
@@ -41,6 +45,14 @@ func SetupV1(r gin.IRouter) {
 	// 접속 요청
 	r.POST("/geo/connect")
 
+}
+
+func v1AuthLogin(c *gin.Context) {
+
+}
+
+func v1AuthLogout(c *gin.Context) {
+	lc := LogoutCache(c)
 }
 
 func v1UserRegister(c *gin.Context) {

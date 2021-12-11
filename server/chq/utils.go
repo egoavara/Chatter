@@ -1,10 +1,17 @@
 package chq
 
 import (
+	"time"
+
 	"github.com/couchbase/gocb/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/lestrrat-go/jwx/jwk"
 )
+
+func SetLogoutCache(c *gin.Context, cache map[string]time.Time) { c.Set("logout-cache", cache) }
+func LogoutCache(c *gin.Context) map[string]time.Time {
+	return c.Value("logout-cache").(map[string]time.Time)
+}
 
 func JWKGoogle(c *gin.Context) jwk.Set {
 	return c.Value("jwk-google").(jwk.Set)

@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/couchbase/gocb/v2"
 	"github.com/gin-gonic/gin"
@@ -18,9 +19,10 @@ import (
 
 type ChatterQ struct {
 	// Go
-	Listener net.Listener
-	Autocert *autocert.Manager
-	Statics  afero.Fs
+	Listener    net.Listener
+	Autocert    *autocert.Manager
+	Statics     afero.Fs
+	LogoutCache map[string]time.Time
 	// Gin
 	Gin *gin.Engine
 	// DB
@@ -87,6 +89,7 @@ func (chq *ChatterQ) Run() error {
 }
 
 func (chq *ChatterQ) Plugin(c *gin.Context) {
+	SetLogoutCache(c, chq.LogoutCache)
 	SetCouchbase(c, chq.Couchbase, chq.CouchbaseDefine)
 	if gpub, err := chq.JWKGoogle.Fetch(context.Background(), chq.JWKGoogleURL); err == nil {
 		SetJWKGoogle(c, gpub)
