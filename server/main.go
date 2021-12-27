@@ -1,26 +1,16 @@
 package main
 
 import (
-	"chatter-server/chq"
-	"log"
-	"os"
+	"chatter-server/chq/jwk"
+	"fmt"
 )
 
 func main() {
-	cfg, err := chq.HandleReadCloser(os.Open("./privates/config.json"))
+	s, err := jwk.FetchSet("https://www.googleapis.com/oauth2/v3/certs")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	chq, err := cfg.ChatterQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		if err = chq.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	if err := chq.Run(); err != nil {
-		log.Fatal(err)
-	}
+
+	fmt.Println(s.First())
+	fmt.Println(s.First().Raw)
 }

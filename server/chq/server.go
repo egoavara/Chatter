@@ -1,8 +1,6 @@
 package chq
 
 import (
-	"context"
-	"log"
 	"net"
 	"net/http"
 	"path"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/couchbase/gocb/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/spf13/afero"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -29,12 +26,11 @@ type ChatterQ struct {
 	Couchbase       *gocb.Cluster
 	CouchbaseDefine *CouchbaseDefinition
 	// JWT
-	JWKGoogle      *jwk.AutoRefresh
+	// JWKGoogle      *jwk.AutoRefresh
 	JWKGoogleURL   string
 	JWKGoogleAppID string
 	JWKGoogleToken string
-	JWKSelfPrivate jwk.Key
-	JWKSelfPublic  jwk.Key
+	// JWKSelf        jwk.Key
 }
 
 type CouchbaseDefinition struct {
@@ -91,13 +87,13 @@ func (chq *ChatterQ) Run() error {
 func (chq *ChatterQ) Plugin(c *gin.Context) {
 	SetLogoutCache(c, chq.LogoutCache)
 	SetCouchbase(c, chq.Couchbase, chq.CouchbaseDefine)
-	if gpub, err := chq.JWKGoogle.Fetch(context.Background(), chq.JWKGoogleURL); err == nil {
-		SetJWKGoogle(c, gpub)
-	} else {
-		// TODO : Warn Log
-		log.Printf("[Warn] : %e\n", err)
-	}
-	SetJWKSelf(c, chq.JWKSelfPublic, chq.JWKSelfPrivate)
+	// if gpub, err := chq.JWKGoogle.Fetch(context.Background(), chq.JWKGoogleURL); err == nil {
+	// 	SetJWKGoogle(c, gpub)
+	// } else {
+	// 	// TODO : Warn Log
+	// 	log.Printf("[Warn] : %e\n", err)
+	// }
+	// SetJWKSelf(c, chq.JWKSelf)
 	//
 	c.Next()
 }

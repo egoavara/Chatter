@@ -1,7 +1,6 @@
 package chq
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"io"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/couchbase/gocb/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/spf13/afero"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/http2"
@@ -42,8 +40,8 @@ type Config struct {
 		WaitUntil int                 `json:"wait-until"`
 	} `json:"couchbase"`
 	Auth struct {
-		Private json.RawMessage `json:"jwk-private"`
-		Public  json.RawMessage `json:"jwk-public"`
+		JWK            json.RawMessage `json:"jwk"`
+		ExpireDuration int             `json:"expire-duration"`
 	} `json:"auth"`
 	Google struct {
 		WebCert struct {
@@ -75,15 +73,16 @@ func (s *Config) ChatterQ() (*ChatterQ, error) {
 	q := &ChatterQ{
 		Listener:        nil,
 		Autocert:        nil,
+		Statics:         nil,
+		LogoutCache:     map[string]time.Time{},
 		Gin:             nil,
 		Couchbase:       nil,
 		CouchbaseDefine: &s.Couchbase.Define,
-		JWKGoogle:       nil,
-		JWKGoogleURL:    "",
-		JWKGoogleAppID:  "",
-		JWKGoogleToken:  "",
-		JWKSelfPrivate:  nil,
-		JWKSelfPublic:   nil,
+		// JWKGoogle:       nil,
+		JWKGoogleURL:   "",
+		JWKGoogleAppID: "",
+		JWKGoogleToken: "",
+		// JWKSelf:         nil,
 	}
 	err := NewStackError().
 		// FS
@@ -115,13 +114,16 @@ func (s *Config) ChatterQ() (*ChatterQ, error) {
 				tlscfg.NextProtos = append([]string{http2.NextProtoTLS}, tlscfg.NextProtos...)
 			}
 			switch s.Engine.TLS.Mode {
-			case "Let's Encrypt":
+			case "acme-letsencrypt":
+
 				q.Autocert = &autocert.Manager{
 					Prompt:     autocert.AcceptTOS,
 					HostPolicy: autocert.HostWhitelist(s.Engine.TLS.Domains...),
 					Cache:      autocert.DirCache(s.Engine.TLS.CacheDir),
 				}
-				tlscfg.GetCertificate = q.Autocert.GetCertificate
+				tlscfg = q.Autocert.TLSConfig()
+				// tlscfg.GetCertificate = q.Autocert.GetCertificate
+				// tlscfg.NextProtos = append(tlscfg.NextProtos, acme.ALPNProto)
 			case "X509":
 				cert, err := tls.LoadX509KeyPair(s.Engine.TLS.Certification, s.Engine.TLS.PrivateKey)
 				if err != nil {
@@ -181,14 +183,13 @@ func (s *Config) ChatterQ() (*ChatterQ, error) {
 		}, func() error { return q.Couchbase.Close(nil) }).
 		// Google API, Cert
 		Handle(func() error {
-
 			var err error
 			q.JWKGoogleAppID = s.Google.AppID
 			q.JWKGoogleToken = s.Google.Token
-			q.JWKGoogle = jwk.NewAutoRefresh(context.Background())
+			// q.JWKGoogle = jwk.NewAutoRefresh(context.Background())
 			q.JWKGoogleURL = s.Google.WebCert.URL
-			q.JWKGoogle.Configure(s.Google.WebCert.URL, jwk.WithMinRefreshInterval(time.Duration(s.Google.WebCert.MinInterval)*time.Second))
-			_, err = q.JWKGoogle.Refresh(context.Background(), s.Google.WebCert.URL)
+			// q.JWKGoogle.Configure(s.Google.WebCert.URL, jwk.WithMinRefreshInterval(time.Duration(s.Google.WebCert.MinInterval)*time.Second))
+			// _, err = q.JWKGoogle.Refresh(context.Background(), s.Google.WebCert.URL)
 			if err != nil {
 				return err
 			}
@@ -197,11 +198,7 @@ func (s *Config) ChatterQ() (*ChatterQ, error) {
 		// Self JWK
 		Handle(func() error {
 			var err error
-			q.JWKSelfPrivate, err = jwk.ParseKey(s.Auth.Private)
-			if err != nil {
-				return err
-			}
-			q.JWKSelfPublic, err = jwk.ParseKey(s.Auth.Public)
+			// q.JWKSelf, err = jwk.ParseKey(s.Auth.JWK)
 			if err != nil {
 				return err
 			}

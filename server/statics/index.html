@@ -9,11 +9,21 @@
     <script>
       let AUTH = null;
       function handleLogin() {
-        console.log("hello?")
+        let xhr = new XMLHttpRequest();
+        xhr.onloadend = function () {
+          if (this.status == 200) {
+            console.log(this.response);
+          } else {
+            console.error("Error", this);
+          }
+        };
+        xhr.open("POST", "/api/auth", true);
+        xhr.send();
       }
+
     </script>
     <h1>Hello, World!</h1>
     <button onclick="handleLogin()">Master Login</button>
-    <button onclick="handleLogin()">Register</button>
+    <button onclick="handleLoginRegister()">Register</button>
   </body>
 </html>
