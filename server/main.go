@@ -1,16 +1,16 @@
 package main
 
 import (
-	"chatter-server/chq/jwk"
-	"fmt"
+	"crypto/rand"
+	"crypto/rsa"
+
+	"github.com/lestrrat-go/jwx/jwk"
 )
 
 func main() {
-	s, err := jwk.FetchSet("https://www.googleapis.com/oauth2/v3/certs")
+	rsamp, err := rsa.GenerateMultiPrimeKey(rand.Reader, 3, 2048)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(s.First())
-	fmt.Println(s.First().Raw)
+	jwk.New()
 }
